@@ -41,7 +41,7 @@ public abstract class ScalableView extends View {
 	private int mMinimumVelocity;
 
 	private int mActivePointerId = INVALID_POINTER_ID;
-	private PointF mLastMotionXY = new PointF();
+	private PointF mLastMotionPoint = new PointF();
 
 	protected boolean mInteracting = false;
 	private int mOverscrollDistance;
@@ -50,6 +50,8 @@ public abstract class ScalableView extends View {
 	private EdgeEffectCompat mEdgeGlowBottom = null;
 	private EdgeEffectCompat mEdgeGlowLeft = null;
 	private EdgeEffectCompat mEdgeGlowRight = null;
+
+	private boolean mIsClicking = false;
 
 	public ScalableView(Context context) {
 		this(context, null, 0);
@@ -105,9 +107,11 @@ public abstract class ScalableView extends View {
 			final float x = event.getX();
 			final float y = event.getY();
 
-			mLastMotionXY.set(x, y);
+			mLastMotionPoint.set(x, y);
 			mActivePointerId = event.getPointerId(0);
 			startInteracting();
+			
+			mIsClicking  = touchDown(x, y);
 			break;
 		}
 
@@ -117,59 +121,70 @@ public abstract class ScalableView extends View {
 			if (activePointerIndex >= 0) {
 				float x = event.getX(activePointerIndex);
 				float y = event.getY(activePointerIndex);
-				int deltaX = (int) (mLastMotionXY.x - x);
-				int deltaY = (int) (mLastMotionXY.y - y);
-				mLastMotionXY.set(x, y);
-
-				final int oldX = getScrollX();
-				final int oldY = getScrollY();
-				final int overscrollMode = getOverScrollMode();
-				final boolean canOverscroll = overscrollMode == OVER_SCROLL_ALWAYS
-						|| (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS);
-				if (DEBUG) {
-					Log.v(TAG, String.format(
-							"onverScrollBy: %d, %d, %d, %d, %d, %d", deltaX,
-							deltaY, oldX, oldY, getScrollRangeX(),
-							getScrollRangeY()));
-				}
-				if (overScrollBy(deltaX, deltaY, oldX, oldY, getScrollRangeX(),
-						getScrollRangeY(), mOverscrollDistance,
-						mOverscrollDistance, true)) {
-					// Break our velocity if we hit a scroll barrier.
-					mVelocityTracker.clear();
-				}
-				onScrollChanged(getScrollX(), getScrollY(), oldX, oldY);
-
-				if (canOverscroll) {
-					final int pulledToY = oldY + deltaY;
-					final int pulledToX = oldX + deltaX;
-					if (pulledToY < 0) {
-						mEdgeGlowTop.onPull((float) deltaY / getHeight());
-						if (!mEdgeGlowBottom.isFinished()) {
-							mEdgeGlowBottom.onRelease();
-						}
-					} else if (pulledToY > getScrollRangeY()) {
-						mEdgeGlowBottom.onPull((float) deltaY / getHeight());
-						if (!mEdgeGlowTop.isFinished()) {
-							mEdgeGlowTop.onRelease();
-						}
+				if (mIsClicking) {
+					mIsClicking = touchMove(x, y);
+					if (!mIsClicking) {
+						touchCanceled(x, y);
 					}
-					if (pulledToX < 0) {
-						mEdgeGlowLeft.onPull((float) deltaX / getWidth());
-						if (!mEdgeGlowRight.isFinished()) {
-							mEdgeGlowRight.onRelease();
-						}
-					} else if (pulledToX > getScrollRangeX()) {
-						mEdgeGlowRight.onPull((float) deltaX / getWidth());
-						if (!mEdgeGlowLeft.isFinished()) {
-							mEdgeGlowLeft.onRelease();
-						}
+				}
+				if (mIsClicking) {
+					mLastMotionPoint.set(x, y);
+				} else {
+					int deltaX = (int) (mLastMotionPoint.x - x);
+					int deltaY = (int) (mLastMotionPoint.y - y);
+					mLastMotionPoint.set(x, y);
+
+					final int oldX = getScrollX();
+					final int oldY = getScrollY();
+					final int overscrollMode = getOverScrollMode();
+					final boolean canOverscroll = overscrollMode == OVER_SCROLL_ALWAYS
+							|| (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS);
+					if (DEBUG) {
+						Log.v(TAG, String.format(
+								"onverScrollBy: %d, %d, %d, %d, %d, %d",
+								deltaX, deltaY, oldX, oldY, getScrollRangeX(),
+								getScrollRangeY()));
 					}
-					if (!mEdgeGlowTop.isFinished()
-							|| !mEdgeGlowBottom.isFinished()
-							|| !mEdgeGlowLeft.isFinished()
-							|| !mEdgeGlowRight.isFinished()) {
-						oldPostInvalidateOnAnimation();
+					if (overScrollBy(deltaX, deltaY, oldX, oldY,
+							getScrollRangeX(), getScrollRangeY(),
+							mOverscrollDistance, mOverscrollDistance, true)) {
+						// Break our velocity if we hit a scroll barrier.
+						mVelocityTracker.clear();
+					}
+					onScrollChanged(getScrollX(), getScrollY(), oldX, oldY);
+
+					if (canOverscroll) {
+						final int pulledToY = oldY + deltaY;
+						final int pulledToX = oldX + deltaX;
+						if (pulledToY < 0) {
+							mEdgeGlowTop.onPull((float) deltaY / getHeight());
+							if (!mEdgeGlowBottom.isFinished()) {
+								mEdgeGlowBottom.onRelease();
+							}
+						} else if (pulledToY > getScrollRangeY()) {
+							mEdgeGlowBottom
+									.onPull((float) deltaY / getHeight());
+							if (!mEdgeGlowTop.isFinished()) {
+								mEdgeGlowTop.onRelease();
+							}
+						}
+						if (pulledToX < 0) {
+							mEdgeGlowLeft.onPull((float) deltaX / getWidth());
+							if (!mEdgeGlowRight.isFinished()) {
+								mEdgeGlowRight.onRelease();
+							}
+						} else if (pulledToX > getScrollRangeX()) {
+							mEdgeGlowRight.onPull((float) deltaX / getWidth());
+							if (!mEdgeGlowLeft.isFinished()) {
+								mEdgeGlowLeft.onRelease();
+							}
+						}
+						if (!mEdgeGlowTop.isFinished()
+								|| !mEdgeGlowBottom.isFinished()
+								|| !mEdgeGlowLeft.isFinished()
+								|| !mEdgeGlowRight.isFinished()) {
+							oldPostInvalidateOnAnimation();
+						}
 					}
 				}
 			}
@@ -178,31 +193,40 @@ public abstract class ScalableView extends View {
 		}
 
 		case MotionEvent.ACTION_UP: {
-			final VelocityTracker velocityTracker = mVelocityTracker;
-			velocityTracker.computeCurrentVelocity(1000);
-			// velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-			int initialXVelocity = (int) velocityTracker.getXVelocity();
-			int initialYVelocity = (int) velocityTracker.getYVelocity();
-
-			if (Math.abs(initialXVelocity) > mMinimumVelocity
-					|| Math.abs(initialYVelocity) > mMinimumVelocity) {
-				this.fling(-initialXVelocity, -initialYVelocity);
+			if (mIsClicking) {
+				mIsClicking = false;
+				touchClick(mLastMotionPoint.x, mLastMotionPoint.y);
+				this.stopInteracting();
+			} else {
+				final VelocityTracker velocityTracker = mVelocityTracker;
+				velocityTracker.computeCurrentVelocity(1000);
+				// velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+				int initialXVelocity = (int) velocityTracker.getXVelocity();
+				int initialYVelocity = (int) velocityTracker.getYVelocity();
+	
+				if (Math.abs(initialXVelocity) > mMinimumVelocity
+						|| Math.abs(initialYVelocity) > mMinimumVelocity) {
+					this.fling(-initialXVelocity, -initialYVelocity);
+				} else {
+					if (mScroller.springBack(getScrollX(), getScrollY(), 0,
+							getScrollRangeX(), 0, getScrollRangeY())) {
+						oldPostInvalidateOnAnimation();
+					}
+	
+					this.stopInteracting();
+				}
+			}
+			mActivePointerId = INVALID_POINTER_ID;
+			break;
+		}
+		case MotionEvent.ACTION_CANCEL: {
+			if (mIsClicking) {
+				touchCanceled(mLastMotionPoint.x, mLastMotionPoint.y);
 			} else {
 				if (mScroller.springBack(getScrollX(), getScrollY(), 0,
 						getScrollRangeX(), 0, getScrollRangeY())) {
 					oldPostInvalidateOnAnimation();
 				}
-
-				this.stopInteracting();
-			}
-
-			mActivePointerId = INVALID_POINTER_ID;
-			break;
-		}
-		case MotionEvent.ACTION_CANCEL: {
-			if (mScroller.springBack(getScrollX(), getScrollY(), 0,
-					getScrollRangeX(), 0, getScrollRangeY())) {
-				oldPostInvalidateOnAnimation();
 			}
 
 			mActivePointerId = INVALID_POINTER_ID;
@@ -211,7 +235,7 @@ public abstract class ScalableView extends View {
 
 		case MotionEvent.ACTION_POINTER_DOWN: {
 			final int index = event.getActionIndex();
-			mLastMotionXY.set(event.getX(), event.getY());
+			mLastMotionPoint.set(event.getX(), event.getY());
 			mActivePointerId = event.getPointerId(index);
 			break;
 		}
@@ -223,7 +247,7 @@ public abstract class ScalableView extends View {
 				// This was our active pointer going up. Choose a new
 				// active pointer and adjust accordingly.
 				final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-				mLastMotionXY.set(event.getX(newPointerIndex),
+				mLastMotionPoint.set(event.getX(newPointerIndex),
 						event.getY(newPointerIndex));
 				mActivePointerId = event.getPointerId(newPointerIndex);
 				if (mVelocityTracker != null) {
@@ -237,6 +261,51 @@ public abstract class ScalableView extends View {
 		}
 
 		return true;
+	}
+	
+	protected float computeTouchX(float x) {
+		return x + getScrollX();
+	}
+	protected float computeTouchY(float y) {
+		return y + getScrollY();
+	}
+
+	private void touchCanceled(float x, float y) {
+		float touchX = computeTouchX(x);
+		float touchY = computeTouchY(y);
+		onTouchCanceled(touchX, touchY);
+	}
+
+	private void touchClick(float x, float y) {
+		float touchX = computeTouchX(x);
+		float touchY = computeTouchY(y);
+		onTouchClick(touchX, touchY);
+	}
+
+	private boolean touchMove(float x, float y) {
+		float touchX = computeTouchX(x);
+		float touchY = computeTouchY(y);
+		return onTouchMove(touchX, touchY);
+	}
+
+	private boolean touchDown(float x, float y) {
+		float touchX = computeTouchX(x);
+		float touchY = computeTouchY(y);
+		return onTouchDown(touchX, touchY);
+	}
+
+	protected void onTouchClick(float touchX, float touchY) {
+	}
+
+	protected boolean onTouchMove(float touchX, float touchY) {
+		return false;
+	}
+
+	protected void onTouchCanceled(float touchX, float touchY) {
+	}
+
+	protected boolean onTouchDown(float touchX, float touchY) {
+		return false;
 	}
 
 	private void initVelocityTrackerIfNotExists() {

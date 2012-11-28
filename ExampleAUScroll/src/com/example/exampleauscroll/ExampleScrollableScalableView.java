@@ -16,24 +16,36 @@
 
 package com.example.exampleauscroll;
 
-import com.appunite.scroll.ScrollableScalableView;
-
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.SoundEffectConstants;
+import android.view.accessibility.AccessibilityEvent;
+
+import com.appunite.scroll.ScrollableScalableView;
 
 public class ExampleScrollableScalableView extends ScrollableScalableView {
 
+	private static final int[] PRESSED_STATE = new int[] {android.R.attr.state_window_focused, android.R.attr.state_enabled, android.R.attr.state_pressed};
+
+	private static final int[] NORMAL_STATE = new int[] {android.R.attr.state_window_focused, android.R.attr.state_enabled};
+	
 	private int mWorksheetWidth = 2000;
 	private int mWorksheetHeight = 2000;
 
 	private Paint mPaint;
 
 	private Drawable mPattern;
+	private Drawable mButtonDrawable;
+	private Rect mButtonRect;
+
+	private Runnable mClickRunnalbe;
 
 	public ExampleScrollableScalableView(Context context) {
 		this(context, null, 0);
@@ -49,6 +61,10 @@ public class ExampleScrollableScalableView extends ScrollableScalableView {
 
 		Resources resources = context.getResources();
 		mPattern = resources.getDrawable(R.drawable.pattern);
+		mButtonDrawable = resources.getDrawable(R.drawable.btn_default_holo_dark);
+		mButtonRect = new Rect(40, 40, 400, 200);
+		mButtonDrawable.setBounds(mButtonRect);
+		mButtonDrawable.setState(NORMAL_STATE);
 
 		mPaint = new Paint();
 		mPaint.setStyle(Paint.Style.STROKE);
@@ -70,7 +86,50 @@ public class ExampleScrollableScalableView extends ScrollableScalableView {
 		mPattern.draw(canvas);
 		canvas.drawRect(10, 10, mWorksheetWidth - 11, mWorksheetHeight - 11,
 				mPaint);
+		mButtonDrawable.draw(canvas);
 		canvas.restoreToCount(restoreDrawing);
+	}
+	
+	@Override
+	protected void onTouchCanceled(float x, float y) {
+		mButtonDrawable.setState(NORMAL_STATE);
+		invalidate();
+	}
+	
+	@Override
+	protected void onTouchClick(float x, float y) {
+		mButtonDrawable.setState(NORMAL_STATE);
+		invalidate();
+		if (mClickRunnalbe == null) {
+			mClickRunnalbe = new Runnable() {
+				
+				@Override
+				public void run() {
+					sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED);
+					playSoundEffect(SoundEffectConstants.CLICK);
+					new AlertDialog.Builder(getContext()).setTitle("krowa")
+							.show();
+				}
+			};
+		}
+		if (!post(mClickRunnalbe)) {
+			mClickRunnalbe.run();
+		}
+	}
+	
+	@Override
+	protected boolean onTouchDown(float x, float y) {
+		boolean touch = mButtonRect.contains((int)x, (int)y);
+		if (touch) {
+			mButtonDrawable.setState(PRESSED_STATE);
+			invalidate();
+		}
+		return touch;
+	}
+	
+	@Override
+	protected boolean onTouchMove(float x, float y) {
+		return mButtonRect.contains((int)x, (int)y);
 	}
 
 	protected int getWorksheetWidth() {

@@ -134,4 +134,14 @@ public abstract class ScrollableScalableView extends ScalableView implements OnS
 	@Override
 	public void onScaleEnd(ScaleGestureDetector detector) {
 	}
+
+	@Override
+	protected float computeTouchX(float x) {
+		return super.computeTouchX(x) / mScaleFactorX;
+	}
+	
+	@Override
+	protected float computeTouchY(float y) {
+		return super.computeTouchY(y) / mScaleFactorY;
+	}
 }
