@@ -54,12 +54,16 @@ public abstract class ScrollableScalableView extends ScalableView implements OnS
 
 		final int action = event.getAction();
 		switch (action & MotionEvent.ACTION_MASK) {
-		case MotionEvent.ACTION_DOWN: {
+		case MotionEvent.ACTION_DOWN:
+		{
 			if (mScaleDetector.isInProgress()) {
 				return true;
 			}
 			break;
 		}
+		case MotionEvent.ACTION_POINTER_DOWN:
+			return false;
+		default:
 		}
 
 		return super.onTouchEvent(event);
@@ -119,9 +123,16 @@ public abstract class ScrollableScalableView extends ScalableView implements OnS
 
 	@Override
 	public boolean onScale(ScaleGestureDetector detector) {
+		float spanX = detector.getFocusX();
+		float spanY = detector.getFocusY();
+		float oldScaleFactorX = mScaleFactorX;
+		float oldScaleFactorY = mScaleFactorY;
 		mScaleFactorX *= detector.getScaleFactor();
 		mScaleFactorY *= detector.getScaleFactor();
 		validateScaleFactors();
+		float scrollX = (spanX * (mScaleFactorX - oldScaleFactorX));
+		float scrollY = (spanY * (mScaleFactorY - oldScaleFactorY));
+		internalOverscroll((int)scrollX, (int)scrollY);
 		ViewCompat.postInvalidateOnAnimation(this);
 		return true;
 	}

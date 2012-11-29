@@ -133,59 +133,8 @@ public abstract class ScalableView extends View {
 					int deltaX = (int) (mLastMotionPoint.x - x);
 					int deltaY = (int) (mLastMotionPoint.y - y);
 					mLastMotionPoint.set(x, y);
-
-					final int oldX = getScrollX();
-					final int oldY = getScrollY();
-					final int overscrollMode = getOverScrollMode();
-					final boolean canOverscroll = overscrollMode == OVER_SCROLL_ALWAYS
-							|| (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS);
-					if (DEBUG) {
-						Log.v(TAG, String.format(
-								"onverScrollBy: %d, %d, %d, %d, %d, %d",
-								deltaX, deltaY, oldX, oldY, getScrollRangeX(),
-								getScrollRangeY()));
-					}
-					if (overScrollBy(deltaX, deltaY, oldX, oldY,
-							getScrollRangeX(), getScrollRangeY(),
-							mOverscrollDistance, mOverscrollDistance, true)) {
-						// Break our velocity if we hit a scroll barrier.
-						mVelocityTracker.clear();
-					}
-					onScrollChanged(getScrollX(), getScrollY(), oldX, oldY);
-
-					if (canOverscroll) {
-						final int pulledToY = oldY + deltaY;
-						final int pulledToX = oldX + deltaX;
-						if (pulledToY < 0) {
-							mEdgeGlowTop.onPull((float) deltaY / getHeight());
-							if (!mEdgeGlowBottom.isFinished()) {
-								mEdgeGlowBottom.onRelease();
-							}
-						} else if (pulledToY > getScrollRangeY()) {
-							mEdgeGlowBottom
-									.onPull((float) deltaY / getHeight());
-							if (!mEdgeGlowTop.isFinished()) {
-								mEdgeGlowTop.onRelease();
-							}
-						}
-						if (pulledToX < 0) {
-							mEdgeGlowLeft.onPull((float) deltaX / getWidth());
-							if (!mEdgeGlowRight.isFinished()) {
-								mEdgeGlowRight.onRelease();
-							}
-						} else if (pulledToX > getScrollRangeX()) {
-							mEdgeGlowRight.onPull((float) deltaX / getWidth());
-							if (!mEdgeGlowLeft.isFinished()) {
-								mEdgeGlowLeft.onRelease();
-							}
-						}
-						if (!mEdgeGlowTop.isFinished()
-								|| !mEdgeGlowBottom.isFinished()
-								|| !mEdgeGlowLeft.isFinished()
-								|| !mEdgeGlowRight.isFinished()) {
-							oldPostInvalidateOnAnimation();
-						}
-					}
+					
+					internalOverscroll(deltaX, deltaY);
 				}
 			}
 
@@ -263,6 +212,61 @@ public abstract class ScalableView extends View {
 		return true;
 	}
 	
+	protected void internalOverscroll(int deltaX, int deltaY) {
+		final int oldX = getScrollX();
+		final int oldY = getScrollY();
+		final int overscrollMode = getOverScrollMode();
+		final boolean canOverscroll = overscrollMode == OVER_SCROLL_ALWAYS
+				|| (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS);
+		if (DEBUG) {
+			Log.v(TAG, String.format(
+					"onverScrollBy: %d, %d, %d, %d, %d, %d",
+					deltaX, deltaY, oldX, oldY, getScrollRangeX(),
+					getScrollRangeY()));
+		}
+		if (overScrollBy(deltaX, deltaY, oldX, oldY,
+				getScrollRangeX(), getScrollRangeY(),
+				mOverscrollDistance, mOverscrollDistance, true)) {
+			// Break our velocity if we hit a scroll barrier.
+			mVelocityTracker.clear();
+		}
+		onScrollChanged(getScrollX(), getScrollY(), oldX, oldY);
+
+		if (canOverscroll) {
+			final int pulledToY = oldY + deltaY;
+			final int pulledToX = oldX + deltaX;
+			if (pulledToY < 0) {
+				mEdgeGlowTop.onPull((float) deltaY / getHeight());
+				if (!mEdgeGlowBottom.isFinished()) {
+					mEdgeGlowBottom.onRelease();
+				}
+			} else if (pulledToY > getScrollRangeY()) {
+				mEdgeGlowBottom
+						.onPull((float) deltaY / getHeight());
+				if (!mEdgeGlowTop.isFinished()) {
+					mEdgeGlowTop.onRelease();
+				}
+			}
+			if (pulledToX < 0) {
+				mEdgeGlowLeft.onPull((float) deltaX / getWidth());
+				if (!mEdgeGlowRight.isFinished()) {
+					mEdgeGlowRight.onRelease();
+				}
+			} else if (pulledToX > getScrollRangeX()) {
+				mEdgeGlowRight.onPull((float) deltaX / getWidth());
+				if (!mEdgeGlowLeft.isFinished()) {
+					mEdgeGlowLeft.onRelease();
+				}
+			}
+			if (!mEdgeGlowTop.isFinished()
+					|| !mEdgeGlowBottom.isFinished()
+					|| !mEdgeGlowLeft.isFinished()
+					|| !mEdgeGlowRight.isFinished()) {
+				oldPostInvalidateOnAnimation();
+			}
+		}
+	}
+
 	protected float computeTouchX(float x) {
 		return x + getScrollX();
 	}
