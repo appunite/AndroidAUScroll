@@ -99,6 +99,19 @@ public abstract class ScrollableScalableView extends ScalableView implements OnS
 		invalidate();
 	}
 	
+	protected void setScaleFactorWithoutCheck(float scaleFactorX, float scaleFactorY) {
+		mScaleFactorX = scaleFactorX;
+		mScaleFactorY = scaleFactorY;
+	}
+	
+	public float getScaleFactorX() {
+		return mScaleFactorX;
+	}
+	
+	public float getScaleFactorY() {
+		return mScaleFactorY;
+	}
+	
 	public void setMaxScaleFactor(float maxScaleFactor) {
 		mMaxScaleFactorX = maxScaleFactor;
 		mMaxScaleFactorY = maxScaleFactor;
@@ -106,7 +119,7 @@ public abstract class ScrollableScalableView extends ScalableView implements OnS
 		invalidate();
 	}
 	
-	private void validateScaleFactors() {
+	protected void validateScaleFactors() {
 		if (mScaleFactorX > mMaxScaleFactorX) {
 			mScaleFactorX = mMaxScaleFactorX;
 		}
