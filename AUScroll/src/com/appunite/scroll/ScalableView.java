@@ -17,9 +17,11 @@
 package com.appunite.scroll;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.PointF;
+import android.os.Build;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
@@ -407,6 +409,16 @@ public abstract class ScalableView extends View {
 			oldPostInvalidateOnAnimation();
 		}
 	}
+	
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	private void setScrollXYCompat(int scrollX, int scrollY) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+			setScrollX(scrollX);
+			setScrollY(scrollY);
+		} else {
+			super.scrollTo(scrollX, scrollY);
+		}
+	}
 
 	@SuppressLint("NewApi")
 	@Override
@@ -419,9 +431,7 @@ public abstract class ScalableView extends View {
 		}
 		// Treat animating scrolls differently; see #computeScroll() for why.
 		if (!mScroller.isFinished()) {
-			// super.scrollTo(scrollX, scrollY);
-			setScrollX(scrollX);
-			setScrollY(scrollY);
+			setScrollXYCompat(scrollX, scrollY);
 
 			if (clampedX || clampedY) {
 				mScroller.springBack(scrollX, scrollY, 0, getScrollRangeX(), 0,
