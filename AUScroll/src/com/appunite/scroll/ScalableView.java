@@ -473,11 +473,10 @@ public abstract class ScalableView extends View {
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		int overscrollPadding = 10;
-		int left = getScrollX() - overscrollPadding;
-		int top = getScrollY() - overscrollPadding;
-		int right = getWidth() + left + 2 * overscrollPadding;
-		int bottom = getHeight() + top + 2 * overscrollPadding;
+		int left = getScrollX();
+		int top = getScrollY();
+		int right = getWidth() + left;
+		int bottom = getHeight() + top;
 
 		onDraw(canvas, left, top, right, bottom);
 
