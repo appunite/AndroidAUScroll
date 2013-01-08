@@ -24,9 +24,9 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
-import com.appunite.scroll.ScalableView;
+import com.appunite.scroll.ScrollableView;
 
-public class ExampleScalableView extends ScalableView {
+public class ExampleScalableView extends ScrollableView {
 
 	private int mWorksheetWidth = 2000;
 	private int mWorksheetHeight = 2000;

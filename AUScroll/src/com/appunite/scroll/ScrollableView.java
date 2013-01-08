@@ -31,12 +31,12 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 
-public abstract class ScalableView extends View {
+public abstract class ScrollableView extends View {
 
 	protected static final int INVALID_POINTER_ID = -1;
 
 	private static final boolean DEBUG = false;
-	private static final String TAG = ScalableView.class.getCanonicalName();
+	private static final String TAG = ScrollableView.class.getCanonicalName();
 
 	private OverScrollerCompat mScroller;
 	private VelocityTracker mVelocityTracker = null;
@@ -55,15 +55,15 @@ public abstract class ScalableView extends View {
 
 	private boolean mIsClicking = false;
 
-	public ScalableView(Context context) {
+	public ScrollableView(Context context) {
 		this(context, null, 0);
 	}
 
-	public ScalableView(Context context, AttributeSet attrs) {
+	public ScrollableView(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public ScalableView(Context context, AttributeSet attrs, int defStyle) {
+	public ScrollableView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 
 		mScroller = new OverScrollerCompat(this.getContext());

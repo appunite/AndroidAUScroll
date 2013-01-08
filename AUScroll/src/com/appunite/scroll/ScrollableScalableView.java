@@ -24,7 +24,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
 
-public abstract class ScrollableScalableView extends ScalableView implements OnScaleGestureListener {
+public abstract class ScrollableScalableView extends ScrollableView implements OnScaleGestureListener {
 
 	private ScaleGestureDetector mScaleDetector;
 	private float mScaleFactorX = 1.0f;
